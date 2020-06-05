@@ -1,0 +1,40 @@
+{
+  "project_info": {
+    "project_number": "829493511861",
+    "firebase_url": "https://sosyal-kampus.firebaseio.com",
+    "project_id": "sosyal-kampus",
+    "storage_bucket": "sosyal-kampus.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:829493511861:android:54c226aeac376f7b0ba0fc",
+        "android_client_info": {
+          "package_name": "com.socialcampusreactnative"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "829493511861-8nep3fgvi16qlog0stgn3rj4a6pe16se.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAzX2fbmgtmhtBAO9s33EtWeNKanYkbKC8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "829493511861-8nep3fgvi16qlog0stgn3rj4a6pe16se.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
