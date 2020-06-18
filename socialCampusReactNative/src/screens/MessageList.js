@@ -89,6 +89,17 @@ class MessageList extends Component{
       })
   }
 
+  refresh = (sonuc) => {
+    console.log("gobackkkkkkkkkkon");
+    console.log(this.state.mail);
+    console.log(this.state.users);
+    console.log(sonuc);
+    if(sonuc === true){
+      this.fetchGetId();
+    }
+
+  }
+
   /*
   *Kendi Id değerim
   */
@@ -313,7 +324,7 @@ class MessageList extends Component{
 
               <TouchableOpacity style={{flexDirection:'row', marginTop:10}}
                 key={i}
-                onPress={() => this.props.navigation.navigate("PrivateMessage", {id:v.id, username:v.Kullanici_Adi,mail:v.Email, image:v.Image, block:engel, karsiblock: karsiengel})}
+                onPress={() => this.props.navigation.navigate("PrivateMessage", {id:v.id, username:v.Kullanici_Adi,mail:v.Email, image:v.Image, block:engel, karsiblock: karsiengel, onGoBack: this.refresh})}
                 onLongPress={() => this.deleteAlert(v.id)}
               >
                 <View style={{width:50, height:50, alignItems:'center', justifyContent:'center'}}>

@@ -41,6 +41,7 @@ class Detail extends Component{
       fetchkontrol:0,
       like:false,
       fav:"",
+      fpgrowth: [],
     }
 
 
@@ -58,6 +59,10 @@ class Detail extends Component{
 
   componentWillUnmount() {
     this.backHandler.remove();
+  }
+
+  onGoBack = (a,b) =>{
+    console.log(a);
   }
 
   back = () => {
@@ -126,6 +131,7 @@ class Detail extends Component{
             user:response.User,
             fav:response.Fav,
             fetchkontrol:1,
+            fpgrowth: response.Fpgrowth,
           })
 
       }).catch(error => console.error('Hata:', error));
@@ -261,6 +267,10 @@ class Detail extends Component{
 
 
   render(){
+
+    console.log("**************");
+    console.log(this.state.fpgrowth.length);
+    console.log("**************");
 
     var {navigation} = this.props;
     if(this.state.mail === "" && this.state.fetchkontrol === 0){
@@ -414,6 +424,47 @@ class Detail extends Component{
                     );
                   })}
 
+                  {/* FP GROWTH */}
+
+
+
+                  {this.state.fpgrowth.length > 0 ?
+                    <View>
+                      <View
+                        style={{backgroundColor:'#f37f95', height:40, alignItems:'flex-start', justifyContent:'center', marginTop:10}}
+                      >
+                        <Text style={{fontSize:18, marginLeft:10, fontWeight:'bold'}}>Bunlarada göz atabilirsiniz</Text>
+                      </View>
+
+                      <ScrollView horizontal={true} showsHorizontalScrollIndicator={false} style={{backgroundColor:'#fdd9d9'}}>
+                        {this.state.fpgrowth.map((value, key) => {
+                          return(
+                            <View key={key}>
+                              <TouchableOpacity
+                                style={styles.renderBoxButton}
+                                onPress={() => this.props.navigation.push("DetailMarket", {id:value.Market_Id, onGoBack:this.onGoBack})}
+                              >
+                                  <Image
+                                    style={styles.image}
+                                    resize='stretch'
+                                    source = {{uri: "http://192.168.1.104:8080" + value.Image}}
+                                  />
+                              </TouchableOpacity>
+                            </View>
+                          );
+                      })}
+
+                    </ScrollView>
+                  </View>
+                  :
+
+                  null
+                }
+
+
+
+
+
 
                 </View>
               </Content>
@@ -459,6 +510,14 @@ const styles = StyleSheet.create({
   map: {
    width:Constants.MAX_WIDTH-20,
    height:Constants.MAX_HEIGHT/2,
+ },
+ renderBoxButton:{
+   margin:5,
+   borderWidth:1,
+ },
+ image:{
+   width:Constants.MAX_WIDTH/2-20,
+   height: Constants.MAX_WIDTH/2-20,
  },
 
 })

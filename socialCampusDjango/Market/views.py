@@ -4,7 +4,9 @@ from rest_framework.views import APIView
 from rest_framework.parsers import MultiPartParser, FormParser
 from django.http import JsonResponse
 from rest_framework import status
+
 from Fpgrowth.models import Fpgrowth
+from Fpgrowth.serializers import FpgrowthSerializer
 
 from .models import Market
 from .serializers import MarketSerializer
@@ -22,6 +24,7 @@ from .helpers import modify_input_for_multiple_files
 
 from Users.models import Kullanicilar
 import datetime
+from pyfpgrowth import pyfpgrowth
 
 # Create your views here.
 class UploadMarket(APIView):
@@ -103,36 +106,114 @@ class Detail(APIView):
 
         print(mail)
         print(id)
-
         hata = 0
 
+        """
+
+            FG-GROWTH
+
+        """
+
+        veriler = Fpgrowth.objects.all().values().order_by("Kullanici_Id_id")
+        print(veriler)
+        data = []
+        toplamdata = []
+        tempid = veriler[0]["Kullanici_Id_id"]
+        for i in range(len(veriler)):
+            kid = veriler[i]["Kullanici_Id_id"]
+            market = veriler[i]["Market_Id_id"]
+            if kid == tempid:
+                data.append(market)
+                if i == len(veriler) - 1:
+                    toplamdata.append(data)
+            else:
+                toplamdata.append(data)
+                data = []
+                data.append(market)
+                tempid = kid
+
+        print(toplamdata)
+
+        patterns = pyfpgrowth.find_frequent_patterns(toplamdata, 2)
+        print(patterns)
+
+        rules = pyfpgrowth.generate_association_rules(patterns, 0.7)
+        print(rules)
+
+        temp = []
+        dictList = []
+
+        for key, value in rules.items():
+            temp = [key, value]
+            dictList.append(temp)
+
+        sonuc = []
+        for i in range(len(dictList)):
+            solboyut = dictList[i][0]
+            if (len(solboyut) > 0):
+                value = dictList[i][1][0][0]
+                if value == id:
+                    sonuc = dictList[i][0]
+                    break
+
+        datas = [i for i in sonuc]
+
+
+        """
+
+            FG-GROWTH
+
+        """
         try:
+
 
 
             userId = Kullanicilar.objects.filter(Email=mail).values("id")
             userId = userId[0]["id"]
 
-            fpgwth = Fpgrowth.objects.filter(Market_Id=id, Kullanici_Id=userId)
+
+            print(id)
+            print(userId)
+
+            fpgwth = Fpgrowth.objects.filter(Market_Id_id=id, Kullanici_Id_id=userId)
+            print(fpgwth)
+
             if len(fpgwth) == 0:
-                Fpgrowth.objects.create(Market_Id=Market.objects.get(id=id),
-                                        Kullanici_Id = Kullanicilar.objects.get(id=userId))
+                Fpgrowth.objects.create(Market_Id_id=Market.objects.get(id=id),
+                                        Kullanici_Id_id = Kullanicilar.objects.get(id=userId))
 
 
             fav = Favorites.objects.filter(User_Id=userId, Market_Id=id)
 
+
+
             market_list = Market.objects.filter(id=id)
             image_list = Images.objects.filter(Market_Id=id)
+
+
 
             deger = Market.objects.filter(id=id).values("Created_By")
             user_id = deger[0]["Created_By"]
 
+
+
             user_list = Kullanicilar.objects.filter(id=deger[0]["Created_By"])
 
+            datalistfpgrowth=[]
+            for value in datas:
+                fpgrowth_list = Images.objects.filter(Market_Id=value)[0:1]
+                datalistfpgrowth.append(fpgrowth_list[0])
+
+
+            fpgrowth_serializer = ImageSerializers(datalistfpgrowth, many=True)
             market_serializer = MarketSerializer(market_list, many=True)
             image_serializer = ImageSerializers(image_list, many=True)
             user_serializer = kullanicilarSerializers(user_list, many=True)
         except:
             hata = 1
+
+
+        print(hata)
 
         if hata == 1:
             context = {
@@ -140,6 +221,7 @@ class Detail(APIView):
                 "Image": [],
                 "User": [],
                 "Fav":"",
+                "Fpgrowth": [],
             }
             return JsonResponse(context, safe=False)
         else:
@@ -149,6 +231,7 @@ class Detail(APIView):
                     "Image": image_serializer.data,
                     "User": user_serializer.data,
                     "Fav": "1",
+                    "Fpgrowth": fpgrowth_serializer.data,
                 }
             else:
                 context = {
@@ -156,6 +239,7 @@ class Detail(APIView):
                     "Image": image_serializer.data,
                     "User": user_serializer.data,
                     "Fav": "0",
+                    "Fpgrowth": fpgrowth_serializer.data,
                 }
             return JsonResponse(context, safe=False)
 

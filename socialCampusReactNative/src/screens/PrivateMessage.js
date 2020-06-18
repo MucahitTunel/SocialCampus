@@ -50,6 +50,9 @@ class PrivateMessage extends Component{
   constructor(props){
     super(props);
 
+    this.yazarkontrol = 0;
+
+    this.connectKontrol = 0;
     this.emitKontrol = false;
 
     this.id = this.props.route.params["id"];
@@ -82,10 +85,14 @@ class PrivateMessage extends Component{
       myId:null,
       childs:[],
       conversation_id:"",
-      status: "yazmıyor",
+      status: 'yazmıyor',
+      aaa:false,
+      connect: true,
+      room:'',
+      sayac:0,
+      blocked: this.block,
+      karsiblocked: this.karsiblock,
     }
-
-
 
     this.handleMessage = this.handleMessage.bind(this);
   }
@@ -116,20 +123,20 @@ class PrivateMessage extends Component{
         room = "room"+my+other;
       }
 
-      this.socket.emit("subscribe", room);
 
       this.setState({
+        room: room,
         myId:response.Id[0].id,
       })
 
-
-
-
-
-
-
     }).catch(error => ToastAndroid.show(error, ToastAndroid.LONG) );
   }
+
+
+
+
+
+
 
 
   /*
@@ -153,17 +160,14 @@ class PrivateMessage extends Component{
           child[i] = deger;
           i++;
 
-          console.log(deger);
-          //console.log(key);
         });
-        console.log(data);
-        console.log(child);
+
 
         this.setState({
           receiveMessages: snapshot.val(),
           childs:child,
         })
-        console.log('User data: ', snapshot.val());
+
       });
   }
 
@@ -188,45 +192,43 @@ class PrivateMessage extends Component{
   */
 
   componentDidMount(){
+    this.socket = io("http://192.168.1.104:3000");
+
+    this.socket.on('bagli', data => {
+      console.log(data);
+      this.setState({
+        connect: true,
+      })
+    });
+
+
+    this.socket.on('mesagedurum', (data) => {
+      console.log("**************************************");
+      console.log(data);
+
+      this.setState({
+        status: data.message,
+      })
+    });
+
+    this.getMail();
+
+
+
+
     this.backHandler = BackHandler.addEventListener(
      "hardwareBackPress",
      this.back
    );
 
 
-   this.socket = io("http://192.168.1.104:3000",{transports: ['websocket'], upgrade: false});
 
-   this.socket.on('conversation private post', data => {
-     console.log(data);
-     if(data.message === "yazıyor"){
-       console.log("if");
-       this.setState({
-         status:data.message,
-       })
-     }
-   });
-    /*var url = "http://192.168.1.107:8080/Activities/get_data/";
-    let data = get(url);
-    data.then(response => {
-      console.log(response);
-      this.setState({
-        data:response
-      })
-    })*/
-
-      this.getMail();
-
-
-    //this.fetchData();
   }
-
-
 
   componentWillUnmount() {
     this.backHandler.remove();
-
+    this.socket.close();
   }
-
 
 
   /*
@@ -241,17 +243,11 @@ class PrivateMessage extends Component{
       if(this.emitKontrol === false){
         var my = this.state.myId.toString();
         var other = this.id.toString();
-        var room = "";
-
-        if(this.state.myId > this.id){
-          room = "room"+other+my;
-        }else {
-          room = "room"+my+other;
-        }
+        this.yazarkontrol = 1;
 
         var status = "yazıyor";
         this.socket.emit("send message", {
-          room: room,
+          room: this.state.room,
           message: status
         })
 
@@ -260,17 +256,11 @@ class PrivateMessage extends Component{
     }else {
         var my = this.state.myId.toString();
         var other = this.id.toString();
-        var room = "";
-
-        if(this.state.myId > this.id){
-          room = "room"+other+my;
-        }else {
-          room = "room"+my+other;
-        }
+        this.yazarkontrol = 0;
 
         var status = "yazmıyor";
         this.socket.emit("send message", {
-          room: room,
+          room: this.state.room,
           message: status
         })
 
@@ -292,6 +282,14 @@ class PrivateMessage extends Component{
   *
   */
   back = () => {
+    var sonuc = false;
+    if (this.block === false && this.state.blocked === true) {
+      sonuc = true;
+      this.props.route.params.onGoBack(sonuc);
+    }else {
+      this.props.route.params.onGoBack(sonuc);
+    }
+
     this.props.navigation.goBack();
     return true;
   }
@@ -338,6 +336,9 @@ class PrivateMessage extends Component{
 
         if(response.message === "1"){
           Alert.alert("Engellendi");
+          this.setState({
+            blocked: true,
+          })
         }else {
           Alert.alert("Engellenemedi");
         }
@@ -363,15 +364,13 @@ class PrivateMessage extends Component{
 
 
     var tarih = date + '/' + month + '/' + year + ' ' + hours + ':' + min;
-
+    this.yazarkontrol = 0;
     var id = this.state.childs.length;
     console.log(id);
 
 
 
-    this.setState({
-      message:"",
-    })
+
 
     database().ref('MessageRoom/'+this.state.myId+'/'+this.id+'/'+childId+'/').set({
       id,
@@ -404,6 +403,16 @@ class PrivateMessage extends Component{
           //error callback
           console.log('error ' , error)
       })
+
+      this.setState({
+        message:"",
+      })
+
+      var status = "yazmıyor";
+      this.socket.emit("send message", {
+        room: this.state.room,
+        message: status
+      })
   }
 
 
@@ -413,6 +422,13 @@ class PrivateMessage extends Component{
   render(){
 
     console.log(this.state.status);
+    console.log(this.state.sayac);
+
+    if(this.state.connect === true && this.connectKontrol === 0 && this.state.room !== ''){
+      this.socket.emit("subscribe", this.state.room);
+      this.connectKontrol=1;
+    }
+
 
     if(this.state.myId !== null && this.kontrol === false){
       this.getMessages();
@@ -428,7 +444,7 @@ class PrivateMessage extends Component{
     *
     */
 
-    if(this.block === true || this.karsiblock === true){
+    if(this.state.blocked === true || this.state.karsiblocked === true){
       return(
 
         <View style={{flex:1}}>
@@ -446,26 +462,11 @@ class PrivateMessage extends Component{
                 >
                   <Icon name="md-arrow-back" color="#ffffff" size={30}/>
               </TouchableOpacity>
+
             </Left>
 
-
-            <Body>
-              {this.state.status === true ?
-                <Text>Yazıyor...</Text>
-
-                :
-
-                null
-              }
-            </Body>
-
-            <Right style={{marginRight:20, }}>
-              <View style={{flexDirection:'row'}}>
-                <View>
-                  <Text style={styles.headerBodyText}>Yorumlar</Text>
-                </View>
-              </View>
-
+            <Right>
+              <Text style={styles.headerBodyText}>Engel</Text>
             </Right>
 
           </Header>
@@ -476,7 +477,10 @@ class PrivateMessage extends Component{
 
 
 
-            <ScrollView>
+            <ScrollView
+              ref={ref => {this.scrollView = ref}}
+              onContentSizeChange={() => this.scrollView.scrollToEnd({animated: true})}
+            >
 
 
               {this.state.receiveMessages !== "" ?
@@ -544,17 +548,42 @@ class PrivateMessage extends Component{
               </TouchableOpacity>
             </Left>
 
-            <Right style={{marginRight:20, }}>
+            <Body>
+
               <View style={{flexDirection:'row'}}>
-                <View>
-                  <Text style={styles.headerBodyText}>Yorumlar</Text>
+                <Image
+                  style={{width:50, height:50, borderRadius:25}}
+                  source={{uri:'http://192.168.1.104:8080' + this.image}}
+                />
+
+                <View style={{flexDirection:'column'}}>
+                  <View>
+                    <Text style={{fontSize:16, color:'#fff', marginLeft:10}}>{this.username}</Text>
+                  </View>
+
+                  <View>
+                    {this.state.status === "yazıyor" && this.yazarkontrol === 0 ?
+
+                      <Text style={{fontSize:12,color:'#fff', marginLeft:10}}>Yazıyor...</Text>
+
+                      :
+
+                      null
+                    }
+                  </View>
                 </View>
+              </View>
+
+
+            </Body>
+
+            <Right style={{marginRight:20, }}>
+
                 <TouchableOpacity style={{marginLeft:10}}
                   onPress={this.blockAlert}
                 >
                   <MaterialIcon name="block" size={30} color="#ffffff" />
                 </TouchableOpacity>
-              </View>
 
             </Right>
 
@@ -566,7 +595,10 @@ class PrivateMessage extends Component{
 
 
 
-            <ScrollView>
+            <ScrollView
+              ref={ref => {this.scrollView = ref}}
+              onContentSizeChange={() => this.scrollView.scrollToEnd({animated: true})}
+            >
 
 
               {this.state.receiveMessages !== "" ?

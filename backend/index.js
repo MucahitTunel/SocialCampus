@@ -15,22 +15,26 @@ io.on("connection", socket => {
   count++;
   console.log(count);
 
+  socket.emit('bagli', count);
 
   socket.on('subscribe', function(room) {
-    console.log('joining room', room);
-    socket.join(room);
+      console.log('joining room', room);
+      socket.join(room);
 
-});
-
-
-
-socket.on('send message', function(data){
-  console.log('sending room post', data.room);
-  socket.broadcast.to(data.room).emit('conversation private post', {
-    message: data.message
   });
-  console.log("retry");
-});
+
+
+
+  socket.on('send message', function(data){
+    console.log('sending room post', data.room);
+    socket.broadcast.to(data.room).emit('mesagedurum',{
+      message: data.message
+    })
+    /*socket.emit('mesagedurum', {
+      message: data.message
+    });*/
+    console.log("retry");
+  });
 
 
 
