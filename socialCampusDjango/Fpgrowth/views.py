@@ -32,6 +32,7 @@ class AddData(APIView):
                 data.append(market)
                 tempid = id
 
+
         print(toplamdata)
 
         patterns = pyfpgrowth.find_frequent_patterns(toplamdata, 2)
