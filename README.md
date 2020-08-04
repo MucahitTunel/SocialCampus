@@ -8,6 +8,7 @@ Sosyal kampüs uygulaması kullanıcılar arasında iletişim kurmayı saylayan 
 2. Node.js
 3. Python-Django
 4. Socket.io
+5. Firebase
 
 ## Uygulama Görüntüleri
 
